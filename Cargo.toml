@@ -1,0 +1,14 @@
+[package]
+name = "linux-futex"
+version = "0.1.0"
+authors = ["Mara Bos <m-ou.se@m-ou.se>"]
+edition = "2018"
+description = "Futex: A Linux-specific fast user-space locking primitive"
+license = "BSD-2-Clause"
+repository = "https://github.com/m-ou-se/linux-futex"
+readme = "README.md"
+keywords = ["linux", "futex"]
+categories = ["concurrency", "os::unix-apis"]
+
+[dependencies]
+libc = "0.2.67"
