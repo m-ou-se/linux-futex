@@ -1,3 +1,4 @@
+use libc::{c_long, time_t};
 use std::time::{Duration, Instant, SystemTime};
 
 /// A point in time on either the monotonic clock ([`Instant`]) or real time clock ([`SystemTime`]).
@@ -29,7 +30,7 @@ unsafe impl Timeout for SystemTime {
 #[inline]
 pub fn as_timespec(d: Duration) -> libc::timespec {
 	libc::timespec {
-		tv_sec: d.as_secs() as i64,
-		tv_nsec: d.subsec_nanos() as i64,
+		tv_sec: d.as_secs() as time_t,
+		tv_nsec: d.subsec_nanos() as c_long,
 	}
 }
