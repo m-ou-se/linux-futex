@@ -1,6 +1,6 @@
 [package]
 name = "linux-futex"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Mara Bos <m-ou.se@m-ou.se>"]
 edition = "2018"
 description = "Futex: A Linux-specific fast user-space locking primitive"
