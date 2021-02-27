@@ -9,6 +9,7 @@ pub unsafe trait Timeout {
 
 unsafe impl Timeout for Instant {
 	#[inline]
+	#[doc(hidden)]
 	fn as_timespec(self) -> (i32, libc::timespec) {
 		(
 			0,
@@ -19,6 +20,7 @@ unsafe impl Timeout for Instant {
 
 unsafe impl Timeout for SystemTime {
 	#[inline]
+	#[doc(hidden)]
 	fn as_timespec(self) -> (i32, libc::timespec) {
 		(
 			libc::FUTEX_CLOCK_REALTIME,
@@ -28,7 +30,7 @@ unsafe impl Timeout for SystemTime {
 }
 
 #[inline]
-pub fn as_timespec(d: Duration) -> libc::timespec {
+pub(crate) fn as_timespec(d: Duration) -> libc::timespec {
 	libc::timespec {
 		tv_sec: d.as_secs() as time_t,
 		tv_nsec: d.subsec_nanos() as c_long,
