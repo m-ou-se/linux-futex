@@ -305,9 +305,9 @@ impl<S: Scope> Futex<S> {
 
 	/// Wake up `n` waiters matching a bitset.
 	///
-	/// - Waiters waiting using [`wake`][Futex::wake] are always woken up,
+	/// - Waiters waiting using [`wait`][Futex::wait] are always woken up,
 	///   regardless of the bitset.
-	/// - Waiters waiting using [`wake_bitset`][Futex::wake_bitset] are woken up
+	/// - Waiters waiting using [`wait_bitset`][Futex::wait_bitset] are woken up
 	///   if they match at least one 1-bit.
 	///
 	/// Returns the number of waiters that were woken up.
