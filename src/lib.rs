@@ -465,18 +465,26 @@ impl<S: Scope> PiFutex<S> {
 
 	/// See `FUTEX_LOCK_PI` in the [Linux futex man page](http://man7.org/linux/man-pages/man2/futex.2.html).
 	#[inline]
-	pub fn lock_pi_until(&self, timeout: Instant) -> Result<(), TimedLockError> {
-		let timeout = timeout.as_timespec().1;
+	pub fn lock_pi_until(&self, timeout: impl Timeout) -> Result<(), TimedLockError> {
+		const FUTEX_LOCK_PI2: i32 = 13;
+		let (clock, timespec) = timeout.as_timespec();
+		let op = if clock == libc::FUTEX_CLOCK_REALTIME {
+			libc::FUTEX_LOCK_PI
+		} else {
+			// Only available since Linux 5.14.
+			FUTEX_LOCK_PI2
+		};
 		let r = unsafe {
 			FutexCall::new()
-				.futex_op(libc::FUTEX_LOCK_PI + S::futex_flag())
+				.futex_op(op + S::futex_flag())
 				.uaddr(&self.value)
-				.timeout(&timeout)
+				.timeout(&timespec)
 				.call()
 		};
 		match r {
 			Err(Error(libc::EAGAIN)) => Err(TimedLockError::TryAgain),
 			Err(Error(libc::ETIMEDOUT)) => Err(TimedLockError::TimedOut),
+			Err(e) if op == FUTEX_LOCK_PI2 => e.panic("FUTEX_LOCK_PI2"),
 			Err(e) => e.panic("FUTEX_LOCK_PI"),
 			Ok(_) => Ok(()),
 		}
