@@ -23,7 +23,7 @@ pub mod op;
 use op::OpAndCmp;
 use std::marker::PhantomData;
 use std::sync::atomic::AtomicI32;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use sys::{Error, FutexCall};
 use timeout::as_timespec;
 
