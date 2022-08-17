@@ -11,4 +11,4 @@ keywords = ["linux", "futex"]
 categories = ["concurrency", "os::unix-apis"]
 
 [dependencies]
-libc = "0.2.67"
+libc = "0.2.132"
