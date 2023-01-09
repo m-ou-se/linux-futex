@@ -72,6 +72,7 @@ impl Op {
 		Self::new(12, bit)
 	}
 
+	#[inline]
 	fn new(op: u32, value: u32) -> Self {
 		if value >= 1 << 12 {
 			panic!("Value too large: {}", value);
