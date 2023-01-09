@@ -1,14 +1,14 @@
 use std::ptr::null;
-use std::sync::atomic::AtomicI32;
+use std::sync::atomic::AtomicU32;
 
 #[must_use]
 pub struct FutexCall {
-	uaddr: *const AtomicI32,
+	uaddr: *const AtomicU32,
 	futex_op: i32,
-	val: i32,
+	val: u32,
 	timeout: *const libc::timespec,
-	uaddr2: *const AtomicI32,
-	val3: i32,
+	uaddr2: *const AtomicU32,
+	val3: u32,
 }
 
 impl FutexCall {
@@ -25,7 +25,7 @@ impl FutexCall {
 	}
 
 	#[inline]
-	pub fn uaddr(self, uaddr: *const AtomicI32) -> Self {
+	pub fn uaddr(self, uaddr: *const AtomicU32) -> Self {
 		Self { uaddr, ..self }
 	}
 
@@ -35,7 +35,7 @@ impl FutexCall {
 	}
 
 	#[inline]
-	pub fn val(self, val: i32) -> Self {
+	pub fn val(self, val: u32) -> Self {
 		Self { val, ..self }
 	}
 
@@ -45,7 +45,7 @@ impl FutexCall {
 	}
 
 	#[inline]
-	pub fn val2(self, val2: i32) -> Self {
+	pub fn val2(self, val2: u32) -> Self {
 		Self {
 			timeout: val2 as *const _,
 			..self
@@ -53,12 +53,12 @@ impl FutexCall {
 	}
 
 	#[inline]
-	pub fn uaddr2(self, uaddr2: *const AtomicI32) -> Self {
+	pub fn uaddr2(self, uaddr2: *const AtomicU32) -> Self {
 		Self { uaddr2, ..self }
 	}
 
 	#[inline]
-	pub fn val3(self, val3: i32) -> Self {
+	pub fn val3(self, val3: u32) -> Self {
 		Self { val3, ..self }
 	}
 

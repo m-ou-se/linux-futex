@@ -7,10 +7,10 @@
 //! The most important details are also explained in the documentation of this crate.
 //!
 //! The two main types of this crate are [`Futex`] and [`PiFutex`], which are
-//! simply wrappers containing an [`AtomicI32`] exposing all the futex
+//! simply wrappers containing an [`AtomicU32`] exposing all the futex
 //! operations Linux can apply to them.
 //!
-//! Existing [`AtomicI32`]s can be used as futexes through [`AsFutex`]
+//! Existing [`AtomicU32`]s can be used as futexes through [`AsFutex`]
 //! without changing their type.
 
 mod errors;
@@ -22,7 +22,7 @@ pub mod op;
 
 use op::OpAndCmp;
 use std::marker::PhantomData;
-use std::sync::atomic::AtomicI32;
+use std::sync::atomic::AtomicU32;
 use std::time::Duration;
 use sys::{Error, FutexCall};
 use timeout::as_timespec;
@@ -38,7 +38,7 @@ pub use timeout::Timeout;
 /// address spaces (processes).
 #[repr(transparent)]
 pub struct Futex<Scope> {
-	pub value: AtomicI32,
+	pub value: AtomicU32,
 	phantom: PhantomData<Scope>,
 }
 
@@ -57,21 +57,21 @@ pub struct Futex<Scope> {
 /// address spaces (processes).
 #[repr(transparent)]
 pub struct PiFutex<Scope> {
-	pub value: AtomicI32,
+	pub value: AtomicU32,
 	phantom: PhantomData<Scope>,
 }
 
-/// Use any [`AtomicI32`] as [`Futex`] or [`PiFutex`].
+/// Use any [`AtomicU32`] as [`Futex`] or [`PiFutex`].
 ///
 /// This also allows you to convert between a [`Futex`] and a [`PiFutex`] or
 /// between [`Private`] and [`Shared`] futexes if you ever need that, as they
-/// expose their internal [`AtomicI32`] through `.value`.
+/// expose their internal [`AtomicU32`] through `.value`.
 pub trait AsFutex<S> {
 	fn as_futex(&self) -> &Futex<S>;
 	fn as_pi_futex(&self) -> &PiFutex<S>;
 }
 
-impl<S> AsFutex<S> for AtomicI32 {
+impl<S> AsFutex<S> for AtomicU32 {
 	#[must_use]
 	#[inline]
 	fn as_futex(&self) -> &Futex<S> {
@@ -87,9 +87,9 @@ impl<S> AsFutex<S> for AtomicI32 {
 impl<S> Futex<S> {
 	/// Create a new [`Futex`] with an initial value.
 	#[inline]
-	pub const fn new(value: i32) -> Self {
+	pub const fn new(value: u32) -> Self {
 		Self {
-			value: AtomicI32::new(value),
+			value: AtomicU32::new(value),
 			phantom: PhantomData,
 		}
 	}
@@ -98,21 +98,21 @@ impl<S> Futex<S> {
 impl<S> PiFutex<S> {
 	/// Create a new [`PiFutex`] with an initial value.
 	#[inline]
-	pub const fn new(value: i32) -> Self {
+	pub const fn new(value: u32) -> Self {
 		Self {
-			value: AtomicI32::new(value),
+			value: AtomicU32::new(value),
 			phantom: PhantomData,
 		}
 	}
 
 	/// The `FUTEX_WAITERS` bit that indicates there are threads waiting.
-	pub const WAITERS: i32 = -0x8000_0000;
+	pub const WAITERS: u32 = 0x8000_0000;
 
 	/// The `FUTEX_OWNER_DIED` bit that indicates the owning thread died.
-	pub const OWNER_DIED: i32 = 0x4000_0000;
+	pub const OWNER_DIED: u32 = 0x4000_0000;
 
 	/// The bits that are used for storing the thread id (`FUTEX_TID_MASK`).
-	pub const TID_MASK: i32 = 0x3fffffff;
+	pub const TID_MASK: u32 = 0x3fffffff;
 }
 
 impl<S> Default for Futex<S> {
@@ -133,7 +133,7 @@ impl<S: Scope> Futex<S> {
 	/// The thread will only be sent to sleep if the futex's value matches the
 	/// expected value. Otherwise, it returns directly with [`WaitError::WrongValue`].
 	#[inline]
-	pub fn wait(&self, expected_value: i32) -> Result<(), WaitError> {
+	pub fn wait(&self, expected_value: u32) -> Result<(), WaitError> {
 		let r = unsafe {
 			FutexCall::new()
 				.futex_op(libc::FUTEX_WAIT + S::futex_flag())
@@ -157,7 +157,7 @@ impl<S: Scope> Futex<S> {
 	/// If you want an absolute point in time as timeout, use
 	/// [`wait_bitset_until`][Futex::wait_bitset_until] instead, using a bitset of `!0`.
 	#[inline]
-	pub fn wait_for(&self, expected_value: i32, timeout: Duration) -> Result<(), TimedWaitError> {
+	pub fn wait_for(&self, expected_value: u32, timeout: Duration) -> Result<(), TimedWaitError> {
 		let timeout = as_timespec(timeout);
 		let r = unsafe {
 			FutexCall::new()
@@ -185,7 +185,7 @@ impl<S: Scope> Futex<S> {
 			FutexCall::new()
 				.futex_op(libc::FUTEX_WAKE + S::futex_flag())
 				.uaddr(&self.value)
-				.val(n)
+				.val(n as u32)
 				.call()
 		};
 		match r {
@@ -204,8 +204,8 @@ impl<S: Scope> Futex<S> {
 				.futex_op(libc::FUTEX_REQUEUE + S::futex_flag())
 				.uaddr(&self.value)
 				.uaddr2(&to.value)
-				.val(n_wake)
-				.val2(n_requeue)
+				.val(n_wake as u32)
+				.val2(n_requeue as u32)
 				.call()
 		};
 		match r {
@@ -223,7 +223,7 @@ impl<S: Scope> Futex<S> {
 	#[inline]
 	pub fn cmp_requeue(
 		&self,
-		expected_value: i32,
+		expected_value: u32,
 		n_wake: i32,
 		to: &Futex<S>,
 		n_requeue: i32,
@@ -233,8 +233,8 @@ impl<S: Scope> Futex<S> {
 				.futex_op(libc::FUTEX_CMP_REQUEUE + S::futex_flag())
 				.uaddr(&self.value)
 				.uaddr2(&to.value)
-				.val(n_wake)
-				.val2(n_requeue)
+				.val(n_wake as u32)
+				.val2(n_requeue as u32)
 				.val3(expected_value)
 				.call()
 		};
@@ -253,13 +253,13 @@ impl<S: Scope> Futex<S> {
 	/// The thread will only be sent to sleep if the futex's value matches the
 	/// expected value. Otherwise, it returns directly with [`WaitError::WrongValue`].
 	#[inline]
-	pub fn wait_bitset(&self, expected_value: i32, bitset: u32) -> Result<(), WaitError> {
+	pub fn wait_bitset(&self, expected_value: u32, bitset: u32) -> Result<(), WaitError> {
 		let r = unsafe {
 			FutexCall::new()
 				.uaddr(&self.value)
 				.futex_op(libc::FUTEX_WAIT_BITSET + S::futex_flag())
 				.val(expected_value)
-				.val3(bitset as i32)
+				.val3(bitset)
 				.call()
 		};
 		match r {
@@ -280,7 +280,7 @@ impl<S: Scope> Futex<S> {
 	#[inline]
 	pub fn wait_bitset_until(
 		&self,
-		expected_value: i32,
+		expected_value: u32,
 		bitset: u32,
 		timeout: impl Timeout,
 	) -> Result<(), TimedWaitError> {
@@ -290,7 +290,7 @@ impl<S: Scope> Futex<S> {
 				.uaddr(&self.value)
 				.futex_op(libc::FUTEX_WAIT_BITSET + timeout.0 + S::futex_flag())
 				.val(expected_value)
-				.val3(bitset as i32)
+				.val3(bitset)
 				.timeout(&timeout.1)
 				.call()
 		};
@@ -317,8 +317,8 @@ impl<S: Scope> Futex<S> {
 			FutexCall::new()
 				.futex_op(libc::FUTEX_WAKE_BITSET + S::futex_flag())
 				.uaddr(&self.value)
-				.val(n)
-				.val3(bitset as i32)
+				.val(n as u32)
+				.val3(bitset)
 				.call()
 		};
 		match r {
@@ -341,9 +341,9 @@ impl<S: Scope> Futex<S> {
 				.futex_op(libc::FUTEX_WAKE_OP + S::futex_flag())
 				.uaddr(&self.value)
 				.uaddr2(&second.value)
-				.val(n)
-				.val2(n2)
-				.val3(op.raw_bits() as i32)
+				.val(n as u32)
+				.val2(n2 as u32)
+				.val3(op.raw_bits())
 				.call()
 		};
 		match r {
@@ -374,8 +374,8 @@ impl<S: Scope> Futex<S> {
 				.uaddr(&self.value)
 				.uaddr2(&to.value)
 				.val(1)
-				.val2(n_requeue)
-				.val3(expected_value)
+				.val2(n_requeue as u32)
+				.val3(expected_value as u32)
 				.call()
 		};
 		match r {
@@ -395,7 +395,7 @@ impl<S: Scope> Futex<S> {
 	#[inline]
 	pub fn wait_requeue_pi(
 		&self,
-		expected_value: i32,
+		expected_value: u32,
 		second: &PiFutex<S>,
 	) -> Result<(), RequeuePiError> {
 		let r = unsafe {
@@ -423,7 +423,7 @@ impl<S: Scope> Futex<S> {
 	#[inline]
 	pub fn wait_requeue_pi_until(
 		&self,
-		expected_value: i32,
+		expected_value: u32,
 		second: &PiFutex<S>,
 		timeout: impl Timeout,
 	) -> Result<(), TimedRequeuePiError> {

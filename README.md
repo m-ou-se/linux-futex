@@ -10,8 +10,8 @@ The most important details are also explained in the documentation of this crate
 
 The two main types of this crate are [`Futex`](https://docs.rs/linux-futex/*/linux_futex/struct.Futex.html)
 and [`PiFutex`](https://docs.rs/linux-futex/*/linux_futex/struct.PiFutex.html), which are
-simply wrappers containing an `AtomicI32` exposing all the futex operations Linux can apply to them.
+simply wrappers containing an `AtomicU32` exposing all the futex operations Linux can apply to them.
 
-Existing `AtomicI32`s can be used as futexes through
+Existing `AtomicU32`s can be used as futexes through
 [`AsFutex`](https://docs.rs/linux-futex/*/linux_futex/trait.AsFutex.html)
 without changing their type.
