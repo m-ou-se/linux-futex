@@ -72,12 +72,13 @@ impl Op {
 		Self::new(12, bit)
 	}
 
-#[rustfmt::skip]
 	fn new(op: u32, value: u32) -> Self {
 		if value >= 1 << 12 {
 			panic!("Value too large: {}", value);
 		}
-		Self { bits: value << 12 | op << 28 }
+		Self {
+			bits: value << 12 | op << 28,
+		}
 	}
 }
 
